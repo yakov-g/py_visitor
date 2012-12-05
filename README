@@ -1,3 +1,24 @@
 
 Implementing Visitor Pattern in Python
+   In object-oriented programming and software engineering, the visitor design pattern is a way of separating an algorithm from an object structure on which it operates. A practical result of this separation is the ability to add new operations to existing object structures without modifying those structures.[1]
+:
+Double dispatch in visitor pattern
+We have several types of objects and several types of visitors. The task is to provide visiting an object with desired type of pattern.
 
+We have Visitor class, which declares visit functions for different types of objects(header file, source file). Function definitions will be provided in each type of visitor.
+
+
+In C++ or Java there would be function overloading: visit(SOURCE), visit(HEADER). As long as there is no func overloading in python, we check for object class. But it’s not dispatching, because visit is called in accept as visit(self) ; so self type is known
+
+
+
+
+# Why not like this? Yes it will work out in Python. Because we check class name for each object, and call for specified function.
+             But what if we would have two visit funcs in Visitor: visit(SOURCE) visit(HEADER); but ‘o’ is ‘pointer’ to Base class, t.e. File. So Visitor will not be able to determine which visit func to call.
+  But if we call iike o.accept - accept will be called for derived type (accept must be implemented in SOURCE class and HEADER class). So it will be first dispatch. And v.visit - will be second dispatch. Memo: visit(self) called from accept is not dispatch, because self type is known in accept func.(dispatch vas already happen)
+
+
+
+
+References:
+  [1] http://en.wikipedia.org/wiki/Visitor_pattern
