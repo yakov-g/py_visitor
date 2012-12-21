@@ -1,17 +1,163 @@
 
 Implementing Visitor Pattern in Python
-   In object-oriented programming and software engineering, the visitor design pattern is a way of separating an algorithm from an object structure on which it operates. A practical result of this separation is the ability to add new operations to existing object structures without modifying those structures.[1]
-:
-Double dispatch in visitor pattern
-We have several types of objects and several types of visitors. The task is to provide visiting an object with desired type of pattern.
 
-We have Visitor class, which declares visit functions for different types of objects(header file, source file). Function definitions will be provided in each type of visitor.
+   In object-oriented programming and software engineering, the visitor design pattern is a way of separating an algorithm from an object structure on which it operates. A practical result of this separation is the ability to add new operations to existing object structures without modifying those structures.[1]
+
+  The usecase for this is when it's needed to call method, which depends on types of two objects.
+
+To implement this, we need to provide double dispatch to determine which function must be called.
+
+Suppose there are two types of objects: Text, Picture and three file formats: txt, jpg, blob.
+
+We can (or can not) save each object in each file format, so save() funcs will be implemented
+accordingly.
+
+
+So let's start.
+We would like to save() func which can be used like this:
+     o.save(v) ()
+   
+   but we don't know exactly which object calls for save() and with which Saver as parameter.
+
+
+Later, in order keep terminology used to describe Visitor Pattern in other sources, 
+I will use names like: accept(), visit(), Visitor();
+
+but remember, that for our example accept == save; visit_Text == save_Text, Visitor == Saver
+
+
+So both of our classes must implement accept() (save) function,
+   which can receive Visitor of different types:
+
+   pseudo python code:
+
+class Text():
+   data = "Text"
+   def accept(self, v <txtVisitor> || v <jpgVisitor> || v <blobVisitor>):
+      v.visit(self)
+
+class_Picture():
+   data = "Picture"
+   def accept(self, v <txtVisitor> || v <jpgVisitor> || v <blobVisitor>):
+      v.visit(self)
+
+And each of Visitor classes must implement visit function,
+    which actually saves object in desired format.
+    So function must be called depending on object's type.
+
+
+class txtVisitor():
+   def visit(self, o <Text Object>):
+      print "Saving Text object in txt format"
+   def visit(self, o <Picture Object>):
+      print "Can not save Picture in to txt format"
+
+class jpgVisitor():
+   def visit(self, o <Text Object>):
+      print "Can not save Text in jpg format"
+   def visit(self, o <Picture Object>):
+      print "Saving Picture in jpj format"
+
+class jpgVisitor():
+   def visit(self, o <Text Object>):
+      print "Saving Text in blob format"
+   def visit(self, o <Picture Object>):
+      print "Saving Picture in blob format"
+
+So, if we would have list of different objects and list of visitors:
+
+  lst = [Text(), Picture()]
+  vst = [txtSaver(), jpgSaver(), blobSaver()]
+  for o in lst:
+    for v in vst:
+      #First dispatch, accept() will be called for needed type of object:
+      o.accept(v)
+
+     First dispatch fill happen here: 
+     - o.accept(v); accept function will be called
+       depending on type of object t.e. Text or Picture,
+       and some visitor will be passed inside.
+     - Inside of accept() func we don't know anything,
+       about type of Visitor
+     - But we know type of object, because dispatch had already happend.
+
+   Second dispach happens during call v.visit(o)
+     - visit() func which is called, depends on type of visitor
+       and certain type of object.
+
+
+   As soon as there is no function overloading in Python; 
+   we can't declare several visit() funcs with different parameter's types.
+
+   We need provide another way to call needed visit() func.
+   We will define several functions with different names according 
+   to type of object we are going to save:
+
+class txtVisitor():
+   def visit_Text(self, o):
+      print "Saving Text object in txt format"
+
+   def visit_Picture(self, o):
+      print "Can not save Picture in to txt format"
+
+    etc for each Visitor class.
+
+and we will provide visit() func, which will determine type of object
+and call proper method:
+
+We'll do it in Visitor class, which will be parent for other Visitors:
+
+class Visitor(object): #object is a base python class
+
+   def visit(self, o):
+      method_name = "visit_" + o.__class__.__name__ # class name is Text or Picture
+      method = getattr(self, method_name, False) # looking for attribute 'visit_ClassName',
+                                                 # return False, if not found
+
+      # if there is no attribute 'visit_ClassName' in Visitor class
+      # error message will be printed
+      if not method:
+         self.error_message(o)
+         return
+
+      if callable(method):   # checking, if found attribute is func()
+         method(o)           # calling func
+      else:
+         print "%s is not callable attribute"%(method_name)
+
+   def error_message(self, o):
+      print "Error: '%s' can't save '%s'"%(self.__class__.__name__, o.data)
+
+We also can bring accept() func out of object's classes and define it in class like this:
+
+
+class File(object):
+   def accept(self, v):
+     v.visit(self)
+
+class Text(File):
+   data = "Text"
+
+class Picture(File):
+   data = "Picture"
+
+
+
+More truth:
+
+  As soon as Python works with objects, we don't need two dispatches.
+  We need only "first" one, where we determine type of object according to object's class names.
+  Call o.accept.(v) can be changed to v.visit(o), and accept() can be deleted.
+
+  But what if 'o' is not object, but pointer to base class 'File'?
+  (In case of C++: it's imposible to define array of elements with different types,
+   we must define array of pointers to base class: File *arr[]; i  )
+  Without first dispatch,  parameter of 'File' type will be passed into visit(o).
+  There is no visit which accepts 'File' as argument. That's why first dispatch is needed.
+
 
 
 In C++ or Java there would be function overloading: visit(SOURCE), visit(HEADER). As long as there is no func overloading in python, we check for object class. But it’s not dispatching, because visit is called in accept as visit(self) ; so self type is known
-
-
-
 
 # Why not like this? Yes it will work out in Python. Because we check class name for each object, and call for specified function.
              But what if we would have two visit funcs in Visitor: visit(SOURCE) visit(HEADER); but ‘o’ is ‘pointer’ to Base class, t.e. File. So Visitor will not be able to determine which visit func to call.

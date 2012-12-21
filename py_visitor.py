@@ -28,29 +28,31 @@ class Visitor(object):
          print "%s is not callable attribute"%(method_name)
 
    def error_message(self, o):
-      print "Error: '%s' can't save '%s'"%(self.__class__.__name__, o.data)
+      print "  Error: '%s' can't save '%s'"%(self.__class__.__name__, o.data)
 
-class txtSaver(Visitor):
+class txtVisitor(Visitor):
    def visit_Text(self, o):
-      print "Saving '%s' in 'txt' format"%(o.data)
+      print "  Saving '%s' in 'txt' format"%(o.data)
 
-class jpgSaver(Visitor):
+class jpgVisitor(Visitor):
    def visit_Picture(self, o):
-      print "Saving '%s' in 'jpg' format"%(o.data)
+      print "  Saving '%s' in 'jpg' format"%(o.data)
 
-class blobSaver(Visitor):
+class blobVisitor(Visitor):
    def visit_Text(self, o):
-      print "Saving '%s' in 'blob' format"%(o.data)
+      print "  Saving '%s' in 'blob' format"%(o.data)
    def visit_Picture(self, o):
-      print "Saving '%s' in 'blob' format"%(o.data)
+      print "  Saving '%s' in 'blob' format"%(o.data)
 
 def main():
   lst = [Text(), Picture()]
-  vst = [txtSaver(), jpgSaver(), blobSaver()]
+  vst = [txtVisitor(), jpgVisitor(), blobVisitor()]
   for o in lst:
+    print "Object is: %s"%o.data
     for v in vst:
       #First dispatch, accept() will be called for needed type of object:
       o.accept(v)
+    print ""
 
 if __name__ == "__main__":
   main()
